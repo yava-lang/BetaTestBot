@@ -1,0 +1,17 @@
+appsettings.json
+appsettings.Development.json
+
+*.user
+launchSettings.json
+
+bin/
+obj/
+uploads/
+
+.vs/
+.idea/
+*.suo
+*.user
+
+.DS_Store
+Thumbs.db
