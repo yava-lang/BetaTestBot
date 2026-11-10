@@ -16,9 +16,7 @@ using Telegram.Bot.Types.Enums;
 public class BotService(
     ITelegramBotClient _botClient,
     ILogger<BotService> _logger,
-    IServiceProvider _serviceProvider,
-    ApplyHandler _applyHandler,
-    IConfiguration _config) : BackgroundService
+    IServiceProvider _serviceProvider) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stopToken)
     {
@@ -42,11 +40,6 @@ public class BotService(
         return;
     }
 
-    private bool IsAdmin(long telegramID)
-    {
-        return _config.GetSection("BotSettings:AdminIds").Get<List<long>>()?.Contains(telegramID) is true;
-    }
-
     private async Task HandleUpdateAsync(ITelegramBotClient _botClient, Update update, CancellationToken stopToken)
     {
         if (update.Type == UpdateType.Message && update.Message is { Text: not null, From: not null })
@@ -62,6 +55,7 @@ public class BotService(
                 : null;
 
             var applyHandler = scope.ServiceProvider.GetRequiredService<ApplyHandler>();
+            var adminHandler = scope.ServiceProvider.GetRequiredService<AdminHandler>();
 
             if (ActiveApp != null)
             {
@@ -76,7 +70,7 @@ public class BotService(
                 case "/start" or "/help":
                     await _botClient.SendMessage(
                         message.Chat.Id,
-                        "Привет!\nВот список команд доступных на данный момент:\n/help - выводит это сообщение\n/apply - начинает процесс заявки",
+                        "Привет!\nВот список команд доступных на данный момент:\n/help - выводит это сообщение\n/apply - начинает процесс заявки\n/cancel - отмена подачи текущей заявки",
                         cancellationToken: stopToken
                     );
                     break;
@@ -87,31 +81,12 @@ public class BotService(
                     await applyHandler.CancelApplicationAsync(db, _botClient, message, stopToken);
                     break;
                 case "/applications":
-                    if (!IsAdmin(message.From.Id))
-                    {
-                        await _botClient.SendMessage(
-                            message.Chat.Id,
-                            "Недостаточно прав для выполнения данной команды.",
-                            cancellationToken: stopToken
-                        );
-                    }
-                    else
-                    {
-                        var _apps = await db.Applications.Where(a => a.Status == "Pending").ToListAsync(stopToken);
-
-                        string result = string.Join("\n\n", _apps.Select(a => $"ID: {a.ID} | Project: {a.ProjectID} | User: {a.UserID} | Статус: {a.Status}\nИмя: {a.Name}\nПлатформы: {a.Platform}\nОпыт: {a.Experience}\nМотив: {a.Motivation}"));
-
-                        await _botClient.SendMessage(
-                            message.Chat.Id,
-                            result,
-                            cancellationToken: stopToken
-                        );
-                    }
+                    await adminHandler.ShowApplicationsAsync(db, _botClient, message, stopToken);
                     break;
                 default:
                     await _botClient.SendMessage(
                         message.Chat.Id,
-                        "Неизвестная команда",
+                        "Неизвестная команда.",
                         cancellationToken: stopToken
                     );
                     break;
@@ -121,7 +96,7 @@ public class BotService(
 
     private Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken stopToken)
     {
-        _logger.LogError(exception, "Ошибка при получении обновления");
+        _logger.LogError(exception, "Ошибка сети.");
         return Task.CompletedTask;
     }
 }

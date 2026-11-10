@@ -29,6 +29,7 @@ try
             services.AddHostedService<BotService>();
 
             services.AddTransient<ApplyHandler>();
+            services.AddTransient<AdminHandler>();
         })
         .Build();
     using (var scope = host.Services.CreateScope())

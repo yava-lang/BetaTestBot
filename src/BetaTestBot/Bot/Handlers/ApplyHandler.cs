@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using BetaTestBot.Data;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using Telegram.Bot.Types;
 using Telegram.Bot;
 using Microsoft.EntityFrameworkCore;
@@ -147,7 +146,7 @@ public class ApplyHandler(ILogger<ApplyHandler> _logger)
             await db.SaveChangesAsync(stopToken);
             await bot.SendMessage(
                 message.Chat.Id,
-                "Заявка успешно удалена",
+                "Текущая заявка успешно отменена.",
                 cancellationToken: stopToken
             );
         }
@@ -155,7 +154,7 @@ public class ApplyHandler(ILogger<ApplyHandler> _logger)
         {
             await bot.SendMessage(
                 message.Chat.Id,
-                "У вас и так нет активных заявок.",
+                "Не найдено заявок для отмены, cancel culture пошёл по сбою.",
                 cancellationToken: stopToken
             );
         }
