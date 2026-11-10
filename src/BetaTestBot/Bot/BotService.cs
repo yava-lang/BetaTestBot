@@ -1,4 +1,5 @@
 using BetaTestBot.Data;
+using Microsoft.Extensions.Configuration;
 using Serilog;
 using BetaTestBot.Bot.Handlers;
 namespace BetaTestBot.Bot;
@@ -16,7 +17,8 @@ public class BotService(
     ITelegramBotClient _botClient,
     ILogger<BotService> _logger,
     IServiceProvider _serviceProvider,
-    ApplyHandler _applyHandler) : BackgroundService
+    ApplyHandler _applyHandler,
+    IConfiguration _config) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stopToken)
     {
@@ -38,6 +40,11 @@ public class BotService(
             _logger.LogInformation("{info}", info);
         }
         return;
+    }
+
+    private bool IsAdmin(long telegramID)
+    {
+        return _config.GetSection("BotSettings:AdminIds").Get<List<long>>()?.Contains(telegramID) is true;
     }
 
     private async Task HandleUpdateAsync(ITelegramBotClient _botClient, Update update, CancellationToken stopToken)
@@ -78,6 +85,28 @@ public class BotService(
                     break;
                 case "/cancel":
                     await applyHandler.CancelApplicationAsync(db, _botClient, message, stopToken);
+                    break;
+                case "/applications":
+                    if (!IsAdmin(message.From.Id))
+                    {
+                        await _botClient.SendMessage(
+                            message.Chat.Id,
+                            "Недостаточно прав для выполнения данной команды.",
+                            cancellationToken: stopToken
+                        );
+                    }
+                    else
+                    {
+                        var _apps = await db.Applications.Where(a => a.Status == "Pending").ToListAsync(stopToken);
+
+                        string result = string.Join("\n\n", _apps.Select(a => $"ID: {a.ID} | Project: {a.ProjectID} | User: {a.UserID} | Статус: {a.Status}\nИмя: {a.Name}\nПлатформы: {a.Platform}\nОпыт: {a.Experience}\nМотив: {a.Motivation}"));
+
+                        await _botClient.SendMessage(
+                            message.Chat.Id,
+                            result,
+                            cancellationToken: stopToken
+                        );
+                    }
                     break;
                 default:
                     await _botClient.SendMessage(
