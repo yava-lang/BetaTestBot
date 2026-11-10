@@ -1,4 +1,5 @@
 ﻿using BetaTestBot.Bot;
+using BetaTestBot.Data.Entities;
 using BetaTestBot.Data;
 using BetaTestBot.Bot.Handlers;
 using Microsoft.EntityFrameworkCore;
@@ -36,6 +37,15 @@ try
     {
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         db.Database.Migrate();
+
+        if (!await db.Projects.AnyAsync())
+        {
+            db.Projects.Add(new Project { Name = "Тестовая игра", Description = "Проект для бета-тестирования" });
+            await db.SaveChangesAsync();
+        }
+
+        var adminHandler = scope.ServiceProvider.GetRequiredService<AdminHandler>();
+        await adminHandler.UpdateRolesAsync(db, CancellationToken.None);
     }
     await host.RunAsync();
 }
