@@ -1,0 +1,17 @@
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Collections;
+using static System.Net.Mime.MediaTypeNames;
+namespace BetaTestBot.Data.Entities;
+
+public class User()
+{
+    public long ID { get; set; }
+    public long TelegramID { get; set; }
+    public string? Username { get; set; }
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
+    public string Role { get; set; } = "User";
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? LastActiveAt { get; set; }
+    public ICollection<Application> Applications { get; set; } = new List<Application>();
+}
