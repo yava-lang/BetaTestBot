@@ -23,20 +23,20 @@ public class ApplyHandler(ILogger<ApplyHandler> _logger)
 
         var user = await db.Users.FirstOrDefaultAsync(u => u.TelegramID == message.From.Id, stopToken);
 
-        if (user == null)
-        {
-            user = new User
-            {
-                TelegramID = message.From.Id,
-                Username = message.From.Username,
-                FirstName = message.From.FirstName,
-                LastName = message.From.LastName,
-                Role = "User",
-                CreatedAt = DateTime.UtcNow
-            };
-            db.Users.Add(user);
-            await db.SaveChangesAsync(stopToken);
-        }
+        // if (user == null)
+        // {
+        //     user = new User
+        //     {
+        //         TelegramID = message.From.Id,
+        //         Username = message.From.Username,
+        //         FirstName = message.From.FirstName,
+        //         LastName = message.From.LastName,
+        //         Role = "User",
+        //         CreatedAt = DateTime.UtcNow
+        //     };
+        //     db.Users.Add(user);
+        //     await db.SaveChangesAsync(stopToken);
+        // }
 
         if (await db.Applications
             .AsNoTracking()

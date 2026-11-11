@@ -17,7 +17,7 @@ try
 {
     var host = Host.CreateDefaultBuilder(args)
         .UseSerilog()
-        .ConfigureAppConfiguration((config) => config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true))
+        .ConfigureAppConfiguration((config) => config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: false))
         .ConfigureServices((context, services) =>
         {
             var config = context.Configuration;
@@ -31,6 +31,7 @@ try
 
             services.AddTransient<ApplyHandler>();
             services.AddTransient<AdminHandler>();
+            services.AddSingleton<BuildHandler>();
         })
         .Build();
     using (var scope = host.Services.CreateScope())
