@@ -1,6 +1,6 @@
+namespace BetaTestBot.Data;
 using Microsoft.EntityFrameworkCore;
 using BetaTestBot.Data.Entities;
-namespace BetaTestBot.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {

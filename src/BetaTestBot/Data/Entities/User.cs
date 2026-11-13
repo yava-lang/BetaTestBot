@@ -1,6 +1,3 @@
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Collections;
-using static System.Net.Mime.MediaTypeNames;
 namespace BetaTestBot.Data.Entities;
 
 public class User()

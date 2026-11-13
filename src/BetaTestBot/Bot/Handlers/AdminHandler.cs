@@ -1,3 +1,5 @@
+namespace BetaTestBot.Bot.Handlers;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
@@ -6,7 +8,6 @@ using Telegram.Bot;
 using Telegram.Bot.Types;
 using BetaTestBot.Data;
 using BetaTestBot.Data.Entities;
-namespace BetaTestBot.Bot.Handlers;
 
 public class AdminHandler(IConfiguration _config)
 {

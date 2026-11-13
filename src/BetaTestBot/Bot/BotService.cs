@@ -1,10 +1,10 @@
+namespace BetaTestBot.Bot;
+
 using BetaTestBot.Data;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using BetaTestBot.Bot.Handlers;
 using System.Text;
-namespace BetaTestBot.Bot;
-
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
@@ -75,6 +75,8 @@ public class BotService(
         var adminHandler = scope.ServiceProvider.GetRequiredService<AdminHandler>();
         var buildHandler = scope.ServiceProvider.GetRequiredService<BuildHandler>();
 
+        await LogInfo($"{message.From.Id}: {message.Text}");
+
         if (buildHandler.HasActiveUpload(message.From.Id))
         {
             if (message.Text == "/cancel") await buildHandler.CancelUploadAsync(db, _botClient, message, stopToken);
@@ -100,6 +102,10 @@ public class BotService(
             );
             return;
         }
+        else if (message.Text == null)
+        {
+            return;
+        }
 
         var parts = message.Text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var command = parts[0].ToLower(); // "/approve"
@@ -114,7 +120,8 @@ public class BotService(
                 help.Append("\n\nДоступные вам команды:");
                 help.Append("\n\n/help - выводит данное сообщение");
                 help.Append("\n/apply - начать накатывать заяву (процесс можно отменить командой /cancel)");
-                if (db.BetaTesters.FirstOrDefaultAsync(bt => bt.UserID == user.ID && bt.IsActive, stopToken) != null)
+                var userId = user?.ID;
+                if (await db.BetaTesters.AnyAsync(bt => bt.UserID == userId && bt.IsActive, stopToken))
                 {
                     help.Append("\n\n[TESTER] /getbuild - получить последний билд проекта");
                 }

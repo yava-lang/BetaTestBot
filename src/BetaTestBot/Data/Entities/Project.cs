@@ -1,4 +1,3 @@
-using static System.Runtime.InteropServices.JavaScript.JSType;
 namespace BetaTestBot.Data.Entities;
 
 public class Project

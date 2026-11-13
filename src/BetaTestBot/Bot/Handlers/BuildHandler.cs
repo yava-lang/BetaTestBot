@@ -1,12 +1,15 @@
+namespace BetaTestBot.Bot.Handlers;
+
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
+using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types;
 using Telegram.Bot;
 using BetaTestBot.Data;
 using BetaTestBot.Data.Entities;
 using Microsoft.EntityFrameworkCore;
-namespace BetaTestBot.Bot.Handlers;
+
 
 public class BuildHandler(IServiceProvider _serviceProvider,
 ILogger<ApplyHandler> _logger)
@@ -144,7 +147,7 @@ ILogger<ApplyHandler> _logger)
         var fileName = $"{state.Version}_{DateTime.UtcNow:yyyyMMdd_HHmmss}_{message.Document.FileName ?? "build.bin"}";
         var filePath = Path.Combine(uploadsPath, fileName);
         using var stream = File.Create(filePath);
-        await _botClient.DownloadFile(file.FilePath, stream, cancellationToken: stopToken);
+        await _botClient.DownloadFile(file.FilePath ?? throw new InvalidOperationException("filePath doesn't exist"), stream, cancellationToken: stopToken);
 
         var user = await db.Users.FirstOrDefaultAsync(u => u.ID == message.From.Id, stopToken);
         var project = await db.Projects.FirstOrDefaultAsync(p => p.ID == state.ProjectID, stopToken);
@@ -169,7 +172,7 @@ ILogger<ApplyHandler> _logger)
 
         await _botClient.SendMessage(
             message.Chat.Id,
-            $"Билд для проекта {(project == null ? "что" : project.Name)} успешно выгружен!\n{sentCount} пользователей получили новый билд.",
+            $"Билд для проекта {(project == null ? "что" : project.Name)} успешно выгружен!\nПользователей получили новый билд: {sentCount}.",
             cancellationToken: stopToken
         );
     }
@@ -225,8 +228,9 @@ ILogger<ApplyHandler> _logger)
                     tester.User?.TelegramID,
                     $"Получен новый билд для проекта {projectName}!" +
                     $"\n\nВерсия: {build.Version}" +
-                    $"\nСписок изменений:\n{build.ChangeLog}" +
+                    $"\nСписок изменений:\n<blockquote>{build.ChangeLog}</blockquote>" +
                     $"\n\nДля получения нового билда, используйте /getbuild",
+                    parseMode: ParseMode.Html,
                     cancellationToken: stopToken
                 );
                 sentCount++;

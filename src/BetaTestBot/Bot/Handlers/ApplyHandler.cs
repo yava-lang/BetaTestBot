@@ -1,9 +1,10 @@
+namespace BetaTestBot.Bot.Handlers;
+
 using Microsoft.Extensions.Logging;
 using BetaTestBot.Data;
 using Telegram.Bot.Types;
 using Telegram.Bot;
 using Microsoft.EntityFrameworkCore;
-namespace BetaTestBot.Bot.Handlers;
 using BetaTestBot.Data.Entities;
 
 public class ApplyHandler(ILogger<ApplyHandler> _logger)
@@ -22,6 +23,7 @@ public class ApplyHandler(ILogger<ApplyHandler> _logger)
         if (message.From == null) return;
 
         var user = await db.Users.FirstOrDefaultAsync(u => u.TelegramID == message.From.Id, stopToken);
+        if (user == null) return;
 
         // if (user == null)
         // {
