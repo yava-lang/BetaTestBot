@@ -32,6 +32,7 @@ try
             services.AddTransient<ApplyHandler>();
             services.AddTransient<AdminHandler>();
             services.AddSingleton<BuildHandler>();
+            services.AddSingleton<FeedbackHandler>();
         })
         .Build();
     using (var scope = host.Services.CreateScope())

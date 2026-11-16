@@ -74,6 +74,7 @@ public class BotService(
         var applyHandler = scope.ServiceProvider.GetRequiredService<ApplyHandler>();
         var adminHandler = scope.ServiceProvider.GetRequiredService<AdminHandler>();
         var buildHandler = scope.ServiceProvider.GetRequiredService<BuildHandler>();
+        var feedbackHandler = scope.ServiceProvider.GetRequiredService<FeedbackHandler>();
 
         await LogInfo($"{message.From.Id}: {message.Text}");
 
@@ -90,6 +91,15 @@ public class BotService(
 
             if (message.Text == "/cancel") await applyHandler.CancelApplicationAsync(db, _botClient, message, stopToken);
             else await applyHandler.HandleAnswerAsync(db, _botClient, message, stopToken);
+            return;
+        }
+        
+        if (feedbackHandler.HasActiveFeedback(message.From.Id))
+        {
+            if (message.Text == "/cancel") await feedbackHandler.CancelFeedbackAsync(db, _botClient, message, stopToken);
+            else if (message.Text == "/skip") await feedbackHandler.SkipScreenshotAsync(db, _botClient, message, stopToken);
+            else if (message.Document != null || message.Photo != null) await feedbackHandler.HandleFeedbackFileAsync(db, _botClient, message, stopToken);
+            else if (message.Text != null) await feedbackHandler.HandleFeedbackAnswerAsync(db, _botClient, message, stopToken);
             return;
         }
 
@@ -124,13 +134,19 @@ public class BotService(
                 if (await db.BetaTesters.AnyAsync(bt => bt.UserID == userId && bt.IsActive, stopToken))
                 {
                     help.Append("\n\n[TESTER] /getbuild - получить последний билд проекта");
+                    help.Append("\n[TESTER] /feedback - отправить фидбек по проекту (процесс можно отменить командой /cancel)");
                 }
                 if (adminHandler.IsAdmin(message.From.Id))
                 {
-                    help.Append("\n\n[ADMIN] /applications - просмотр списка заявлений (по умолчанию для Pending заявлений)");
+                    help.Append("\n\n[ADMIN] /applications - просмотр списка заявлений (по умолчанию для Pending)");
                     help.Append("\n[ADMIN] /approve - принятие заявления (требует аргумент ID заявления)");
                     help.Append("\n[ADMIN] /reject - отказ заявления (требует аргумент ID заявления)");
                     help.Append("\n[ADMIN] /uploadbuild - начать выгрузку билда (опционально принимает ID проекта)");
+                    help.Append("\n[ADMIN] /testers - просмотр списка тестеров (требует аргумент ID проекта)");
+                    help.Append("\n[ADMIN] /removetester - отключить тестера (требует аргумент UserID)");
+                    help.Append("\n[ADMIN] /feedbacks - список фидбеков (по умолчанию для New)");
+                    help.Append("\n[ADMIN] /feedbackinfo - подробная информация о фидбеке (требует аргумент ID)");
+                    help.Append("\n[ADMIN] /resolve - обновить статус фидбека (требует аргументы: ID, новый статус, и необязательно комментарий)");
                 }
 
                 await _botClient.SendMessage(
@@ -153,18 +169,36 @@ public class BotService(
             case "/getbuild":
                 await buildHandler.GetLatestBuildAsync(db, _botClient, message, stopToken);
                 break;
+            case "/feedback":
+                await feedbackHandler.StartFeedbackAsync(db, _botClient, message, stopToken);
+                break;
 
             case "/applications":
-                await adminHandler.ShowApplicationsAsync(db, _botClient, message, stopToken, args);
+                await adminHandler.ShowApplicationsAsync(db, _botClient, message, args, stopToken);
                 break;
             case "/approve":
-                await adminHandler.ApproveApplicationAsync(db, _botClient, message, stopToken, args);
+                await adminHandler.ApproveApplicationAsync(db, _botClient, message, args, stopToken);
                 break;
             case "/reject":
-                await adminHandler.RejectApplicationAsync(db, _botClient, message, stopToken, args);
+                await adminHandler.RejectApplicationAsync(db, _botClient, message, args, stopToken);
                 break;
             case "/uploadbuild":
-                await buildHandler.StartUploadAsync(db, _botClient, message, stopToken, args);
+                await buildHandler.StartUploadAsync(db, _botClient, message, args, stopToken);
+                break;
+            case "/testers":
+                await adminHandler.ShowTestersAsync(db, _botClient, message, args, stopToken);
+                break;
+            case "/removetester":
+                await adminHandler.RemoveTesterAsync(db, _botClient, message, args, stopToken);
+                break;
+            case "/feedbacks":
+                await adminHandler.ShowFeedbacksAsync(db, _botClient, message, args, stopToken);
+                break;
+            case "/feedbackinfo":
+                await adminHandler.ShowFeedbackInfoAsync(db, _botClient, message, args, stopToken);
+                break;
+            case "/resolve":
+                await adminHandler.ResolveFeedbackAsync(db, _botClient, message, args, stopToken);
                 break;
 
             default:

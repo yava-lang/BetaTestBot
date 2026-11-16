@@ -28,7 +28,7 @@ ILogger<ApplyHandler> _logger)
         return _activeUploads.ContainsKey(telegramId);
     }
 
-    public async Task StartUploadAsync(AppDbContext db, ITelegramBotClient _botClient, Message message, CancellationToken stopToken, string[] args)
+    public async Task StartUploadAsync(AppDbContext db, ITelegramBotClient _botClient, Message message, string[] args, CancellationToken stopToken)
     {
         if (message.From == null) return;
 
@@ -144,13 +144,13 @@ ILogger<ApplyHandler> _logger)
         if (!Directory.Exists(uploadsPath))
             Directory.CreateDirectory(uploadsPath);
 
-        var fileName = $"{state.Version}_{DateTime.UtcNow:yyyyMMdd_HHmmss}_{message.Document.FileName ?? "build.bin"}";
+        var user = await db.Users.FirstOrDefaultAsync(u => u.ID == message.From.Id, stopToken);
+        var project = await db.Projects.FirstOrDefaultAsync(p => p.ID == state.ProjectID, stopToken);
+
+        var fileName = $"{project?.Name}_{state.Version}";
         var filePath = Path.Combine(uploadsPath, fileName);
         using var stream = File.Create(filePath);
         await _botClient.DownloadFile(file.FilePath ?? throw new InvalidOperationException("filePath doesn't exist"), stream, cancellationToken: stopToken);
-
-        var user = await db.Users.FirstOrDefaultAsync(u => u.ID == message.From.Id, stopToken);
-        var project = await db.Projects.FirstOrDefaultAsync(p => p.ID == state.ProjectID, stopToken);
 
         var build = new Build
         {

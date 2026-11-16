@@ -4,11 +4,12 @@ using BetaTestBot.Data.Entities;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    public DbSet<User> Users { get; set; }
-    public DbSet<Project> Projects { get; set; }
-    public DbSet<Application> Applications { get; set; }
-    public DbSet<Build> Builds { get; set; }
-    public DbSet<BetaTester> BetaTesters { get; set; }
+    public DbSet<User> Users { get; set; } = null!;
+    public DbSet<Project> Projects { get; set; } = null!;
+    public DbSet<Application> Applications { get; set; } = null!;
+    public DbSet<Build> Builds { get; set; } = null!;
+    public DbSet<BetaTester> BetaTesters { get; set; } = null!;
+    public DbSet<Feedback> Feedbacks { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
